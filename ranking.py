@@ -42,7 +42,7 @@ for f in filee:
     c = c + 1
     if c == 1:
         continue
-    fsplit = f.strip().split("\t")
+    fsplit = f.strip().split(" ")
     if fsplit[0] not in mapping:
         mapping[int(fsplit[0])] = map(float, fsplit[1:])
         emb_size = len(fsplit[1:])
@@ -98,8 +98,8 @@ def density():
 def rank():
     sorted_score = density()
     filew = open(args.rankedgroups, 'w')
-    for grp in sorted_score:
-        filew.write(str(grp[0]) + "\n")
+    for grp in sorted_score: # return the score as well to check sorting.
+        filew.write(str(grp[0]) + " " + str(grp[1]) +"\n")
     filew.close()
 
 
