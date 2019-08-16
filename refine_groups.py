@@ -213,7 +213,6 @@ def producttightness(group):
     return len(intersection) / (len(union) * 1.0)
 
 
-#
 def averagetimewindow_ratingvariance(group, L):
 
     if len(group.prods) == 0:
@@ -325,7 +324,6 @@ def GCS(group):
     return maxx
 
 
-#
 def GMCS(group):
 
     avg = 0
@@ -365,7 +363,7 @@ def calc_score(g, Lsub):
         producttightness(g), ans[0], ans[1],
         productreviewerratio(g)
     ]
-    return score, sum(score) / (len(score) * 1.0)
+    return (score, sum(score) / (len(score) * 1.0), groupsize(g), GCS(g))
 
 
 def create_groups():
@@ -389,6 +387,8 @@ def create_groups():
                 ans = calc_score(group, Lsub)
                 scorepred = ans[0]
                 spamicity = ans[1]
+                gs = ans[2]
+                rcs = ans[3]
 
                 c = 0
                 denom = 0
@@ -418,7 +418,9 @@ def create_groups():
                         'scoregt': store,
                         'scoregtreviewprec': (c * 1.0) / denom,
                         'fakegt': 0,
-                        'fakepred': spamicity
+                        'fakepred': spamicity,
+                        'gs': gs,
+                        'rcs': rcs
                     }
                     x = x + 1
 
@@ -445,4 +447,19 @@ grps2 = {}
 create_groups()
 with open(args.outputgroups, 'w') as fp:
     json.dump(grps2, fp)
-print 'end'
+
+count = 0.0
+GS_ = 0.0
+RCS_ = 0.0
+for index in grps2:
+    if len(grps2[index]['users']) < 2:
+        continue
+    GS_ += grps2[index]['gs']
+    RCS_ += grps2[index]['rcs']
+    count += 1
+
+print(count)
+print(GS_ / count)
+print(RCS_ / count)
+
+print('end')

@@ -523,7 +523,9 @@ def calc_score(g, Lsub):
     score = [
         reviewtightness(g, Lsub),
         neighbortightness(g, Lsub),
-        producttightness(g), ans[0], ans[1],
+        producttightness(g),
+        ans[0],
+        ans[1],
         productreviewerratio(g),
         groupsize(g),
         multiplereview(g)

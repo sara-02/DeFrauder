@@ -28,7 +28,9 @@ class Review:
         self.date = date
 
     def __repr__(self):
-        return '({},{})'.format(self.userid)
+        # Python __repr__() function returns the object representation.
+        # It could be any valid python expression such as tuple, dictionary, string etc.
+        return '({})'.format(self.userid)
 
     def __hash__(self):
         return hash((self.userid))
@@ -40,13 +42,15 @@ class Review:
         return not self.__eq__(other)
 
 
-def isAdjacent(e1, e2):
+def isAdjacent(e1, e2):  # QA: Did not understand this function?
     if e1[0] == e2[0] or e1[1] == e2[0] or e1[0] == e2[1] or e1[1] == e2[1]:
         return True
     return False
 
 
-def degree(G, edge):
+def degree(
+        G, edge
+):  # The degree w.r.t two nodes in the edge. -1 to remove repetition.
     return G.degree[edge[0]] + G.degree[edge[1]] - 1
 
 
@@ -67,38 +71,67 @@ def canbeincluded(userset):
 text = {}
 textf = open(args.rc, 'r')
 for row in textf:
-
+    # row is of form:
+    # userid prodid date review
+    # 0 0 2014-02-08 blah-blah-blah-review.
     userid = int(row.split("\t")[1].strip())
     prodid = int(row.split("\t")[0].strip())
     if userid not in text:
         text[userid] = {}
     if prodid not in text[userid]:
         text[userid][prodid] = row.split("\t")[3].strip()
+    """
+    text is of form:
+    {
+      0:{
+          {
+            1: "blah-blah"
+          },
+          {
+            2: "blah-blah"
+          }
+      },
+      9: {
+            {
+            1: "blah-blah"
+          },
+          {
+            100: "blah-blah"
+          }
+      }
+    }
+    userid, and prodid are of type int.
+    """
 
 minn = {}
-d = {}
-fake = set()
+d = {}  # Finally it will store the min_review_date for each prodid(str)
+fake = set()  # it will store the userid(str) of fake reviwers
 filee = open(args.metadata, 'r')
 for f in filee:
-
+    # row is of form:
+    # userid prodid rating label date
+    # 0      0      5      1   2014-02-08
     fsplit = f.split("\t")
-
     userid = fsplit[0]
     prodid = fsplit[1]
     rating = int(round(float(fsplit[2])))
     label = fsplit[3]
 
     if int(label) == -1:
-        fake.add(userid)
-
+        fake.add(userid)  # The userid in fakeset is of type str.
+    """
+    For each prodcut we keep track of current review date and min review date.
+    """
+    # TODO: Redo without minn?
     date = fsplit[4].strip()
-    if prodid not in d:
-        minn[prodid] = 0
+    if prodid not in d:  # The prodif in d and minn is of type str.
+        minn[prodid] = 0  # QA: Is this line needed?
         d[prodid] = datetime.strptime(date, "%Y-%m-%d").date()
 
     minn[prodid] = datetime.strptime(date, "%Y-%m-%d").date()
     if minn[prodid] < d[prodid]:
         d[prodid] = minn[prodid]
+
 filee.close()
 
 G = nx.Graph()
@@ -111,31 +144,45 @@ mainnodelist = set()
 count = 0
 filee = open(args.metadata, 'r')
 for f in filee:
-
     fsplit = f.split("\t")
-
-    userid = fsplit[0]
-    prodid = fsplit[1]
-    rating = str(int(round(float(fsplit[2]))))
-    label = fsplit[3]
+    userid = fsplit[0]  # type str
+    prodid = fsplit[1]  # type str
+    rating = str(int(round(float(fsplit[2]))))  # type str
+    label = fsplit[3]  # type str
     date = fsplit[4].strip()
     newdate = datetime.strptime(date, "%Y-%m-%d").date()
-    datetodays = (newdate - d[prodid]).days
+    datetodays = (newdate - d[prodid]).days #type int
+    # #days between first review  ever review of this prodid and this review.
     review = Review(userid, '', prodid, '', rating, label, datetodays)
-
+    # review is presented as
     if prodid + "_" + rating not in reviewsperproddata:
-        count = count + 1
+        count = count + 1  # new product-rating combination found.
         reviewsperproddata[prodid + "_" + rating] = set()
+        prodlist[prodid + "_" + rating] = []
         dictprod[count] = prodid + "_" + rating
         dictprodr[prodid + "_" + rating] = count
-        prodlist[prodid + "_" + rating] = []
+        """
+        dictprod: {0:'0_5',1:'0_4'}
+        dictprodr: {'0_5':0, '0_4':1}
+        """
+        # for each unique prod-rating combination add a node in graph.
         G.add_node(count)
-
+    # if prod-rating combo is not new,
+    # its count-prod-rating mapping already exists.
+    # Save the review obj, in the prodlist.
     prodlist[prodid + "_" + rating].append(review)
-
     reviewsperproddata[prodid + "_" + rating].add(review)
-filee.close()
+    """
+    prodlist: {'2_3': [(12)], '2_4': [(11)], '1_5': [(5), (6), (8), (9), (10)], '1_3': [(7)]}
+    reviewsproddata: {'2_3': set([(12)]), '2_4': set([(11)]),'1_3': set([(7)])}
+    i.e for this prod-rating combo which userids reviewed it.
+    """
 
+    # Since one user reviews the prod only once,
+    # in our case the 2 dicts should be of same length.
+    # Also set will be not be able to differentiate 2 reviews as obj ids will be different?
+    # print(len(prodlist)==len(reviewsperproddata))
+filee.close()
 edgedetails = {}
 cmnrevrsedges = {}
 cmnrevrslist = {}
@@ -144,57 +191,84 @@ cmnrevrsedgeslen = {}
 countt = 0
 visited = {}
 mark = {}
-graphlist = list(G.nodes())
-cr = {}
+graphlist = list(G.nodes()) # [1,2,3...]
+cr = {} # list of reviews who gave p the rating r within time t.
 for node1i in range(len(graphlist)):
+    # 1st_loop = 0,1,2.... for each node in the graph.
     node1 = graphlist[node1i]
+    # node1 = 1, 0th elem in list is 1 and so on.
     if node1 not in cr:
         cr[node1] = []
+
     for u1i in range(len(prodlist[dictprod[node1]])):
+        """
+        dictprod[node] -> prod_rating combo.
+        prodlist[combo] - > [list of users who reviewed p with rating r.]
+        Eg: node1 = 1, cr[1] = [], cr = {1: []}
+        2nd_loop = [(5), (6), (8), (9), (10)]
+        for each reviwer in the list, check for that reviwer and the rest(a,b)=(b,a)
+        """
         u1 = prodlist[dictprod[node1]][u1i]
+        # u1i = 0
+        # u1 = (5) --> review obj
         cr11 = set()
         cr11.add(u1)
+        # cr11 = {5}
         for u2i in range(u1i + 1, len(prodlist[dictprod[node1]])):
+            # 3rd_loop = [(6), (8), (9), (10)]
+            # u2i = range(1,...)
+            # u2i = 1
             u2 = prodlist[dictprod[node1]][u2i]
-            if abs(u1.date - u2.date) < 10:
+            # u2 = (6)
+            if abs(u1.date - u2.date) < 10: # if the days diff is <10, co-reviwers.
                 cr11.add(u2)
+            # cr11 = {5,6,8,9,10}
         cr[node1].append(cr11)
-    cr[node1].sort(key=len, reverse=True)
+        # cr[1] = [{5,6,8,9,10}]
+        # in next iteration we review for 6,8,9,10 ; 8,9,10; 9,10
+        # cr ={1: [{5,6,9,10},{6,9},{8},{9,10}], 2: [sets()] }
+        # No reviewer reviewed around the same time as (8)
+    cr[node1].sort(key=len, reverse=True) # largest to smallest.
 
 edgecount = {}
 for node1i in range(len(graphlist)):
-
     node1 = graphlist[node1i]
     for node2i in range(node1i + 1, len(graphlist)):
         node2 = graphlist[node2i]
-
         maxx = 0
         maxxcr = set()
-
         cr1 = cr[node1]
         cr2 = cr[node2]
         crlist = set()
         f = 0
         for cri1 in cr1:
-            if len(cri1) < 2:
-                break
+            if len(cri1) < 2: # Single nodes. Since cr1 is sorted we can safely exit.
+                break # Intersection of single node with any other set does not make sense.
+                # If that node had a common time, that would have been captured before.
             for cri2 in cr2:
-                if len(cri2) < 2:
+                if len(cri2) < 2: # Single nodes. Since cr2 is sorted we can safely exit.
                     f = 1
                     break
                 crr = cri1.intersection(cri2)
-                crr = frozenset(crr)
+                crr = frozenset(crr) # By taking frozen sets, we reduce duplicacy in crlist.
                 if len(crr) > 1:
+                # For the case of p1r1 and p1r2, there will be no common nodes.
                     crlist.add(crr)
 
-            if f == 1:
+            if f == 1: # Single nodes. Since cr2 is sorted we can safely exit.
                 break
 
-        crlist = list(crlist)
+        crlist = list(crlist) # List of frozensets
         crlist.sort(key=len, reverse=True)
+        # print(node1)
+        # print(node2)
+        # print(cr1)
+        # print(cr2)
+        # print(crlist)
+        # sys.exit(1)
 
         for commonreviewers in crlist:
-            if len(commonreviewers) > 1:
+            if len(commonreviewers) > 1: # redundant check, not needed.
 
                 if commonreviewers not in cmnrevrslistr:
                     countt = countt + 1

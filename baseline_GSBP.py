@@ -14,6 +14,14 @@ import pandas as pd
 import re
 from collections import Counter
 from sklearn.linear_model.logistic import LogisticRegression
+import argparse
+
+parser = argparse.ArgumentParser(description='Baseline_GSBP')
+parser.add_argument('--metadata', help='path to metadata')
+parser.add_argument('--rc', help='path to reviewContent')
+parser.add_argument('--dg', help='path to detected groups')
+
+args = parser.parse_args()
 
 
 class Groups:
@@ -62,7 +70,7 @@ minn = {}
 d = {}
 c = 0
 fake = set()
-filee = open("metadata", 'r')
+filee = open(args.metadata, 'r')
 for f in filee:
 
     fsplit = f.split("\t")
@@ -96,7 +104,7 @@ for f in filee:
 filee.close()
 
 text = []
-filee = open("reviewContent", 'r')
+filee = open(args.rc, 'r')
 for f in filee:
     fsplit = f.split("\t")
     text.append(fsplit[3].strip())
@@ -105,7 +113,7 @@ filee.close()
 
 wholerev = {}
 c = 0
-filee = open("metadata", 'r')
+filee = open(args.metadata, 'r')
 l = []
 for f in filee:
 
@@ -190,7 +198,6 @@ for n1i in range(len(G.nodes())):
         elif n2 in edgeweight and n1 in edgeweight[n2]:
             G.add_edge(n1, n2, weight=edgeweight[n2][n1])
 
-
 def reviewtightness(group, L):
     v = 0
     for user in group.users:
@@ -201,7 +208,6 @@ def reviewtightness(group, L):
 
 
 def neighbortightness(group, L):
-
     userlist = list(group.users)
     denom = 0
     num = 0
@@ -440,7 +446,6 @@ def FindGroups(G, k):
     scorepredmain = 0
     spamicitymain = 0
     groupmain = 0
-
     if len(G.nodes()) <= MAXSIZE:
         ansmain = SS(list(G.nodes()))
         scorepredmain = ansmain[0]
@@ -571,8 +576,23 @@ grps = {}
 conn_comp = list(nx.connected_component_subgraphs(G))
 for component in conn_comp:
     G = nx.Graph(component)
+    if len(G.nodes())<2:
+        continue
     FindGroups(G, 1)
 
-with open('baseline_GSBP.json', 'w') as fp:
+with open(args.dg, 'w') as fp:
     json.dump(grps, fp)
+
+count = 0.0
+GS_ = 0.0
+RCS_ = 0.0
+for index in grps:
+    if len(grps[index]['users']) < 2:
+        continue
+    GS_ += grps[index]['scorepred'][7]
+    RCS_ += grps[index]['scorepred'][8]
+    count += 1
+print(count)
+print(GS_ / count)
+print(RCS_ / count)
 print('end')
