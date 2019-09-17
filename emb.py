@@ -70,15 +70,14 @@ for row in userIdMappingfile:
         userIdMapping[userid] = 0
     userIdMapping[userid] = useridmapped
 
-# print([(k,v) for k,v in userIdMapping.items() if v==0])
 
 productIdMapping = {}
 productIdMappingfile = open(args.pm, 'r')
 for row in productIdMappingfile:
     prodid = row.split("\t")[1].strip()
     prodidmapped = row.split("\t")[0].strip()
-    if prodid not in productIdMapping: # QA: Why this if condition?
-        productIdMapping[prodid] = 0 
+    if prodid not in productIdMapping:  # QA: Why this if condition?
+        productIdMapping[prodid] = 0
     productIdMapping[prodid] = prodidmapped
 
 text = []
@@ -217,12 +216,6 @@ for f in filee:
         c = c + 1
 
 filee.close()
-# l=[]
-# for a in allprods:
-#     l.append(len(allprods[a]))
-# l.sort(reverse=True)
-# print l[0]
-# sys.exit(0)
 
 
 def get_cosine(vec1, vec2):
@@ -255,6 +248,7 @@ def cosine(content_a, content_b):
 
     cosine_result = get_cosine(vector1, vector2)
     return cosine_result
+
 
 def user_embedding():
     theta = 0.4

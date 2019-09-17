@@ -459,7 +459,6 @@ for index in grps2:
     count += 1
 
 print(count)
-print(GS_ / count)
-print(RCS_ / count)
-
+print("gcs", GS_ / count)
+print("rcs", RCS_ / count)
 print('end')

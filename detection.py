@@ -58,7 +58,7 @@ def canbeincluded(userset):
     if len(userset) == 0:
         return 0
     union = set()
-    intersection = allusers[list(userset)[0]]
+    intersection = allusers[list(userset)[0]]  # QA: Did not understand this.
     for u in userset:
         union = union.union(allusers[u])
         intersection = intersection.intersection(allusers[u])
@@ -71,9 +71,6 @@ def canbeincluded(userset):
 text = {}
 textf = open(args.rc, 'r')
 for row in textf:
-    # row is of form:
-    # userid prodid date review
-    # 0 0 2014-02-08 blah-blah-blah-review.
     userid = int(row.split("\t")[1].strip())
     prodid = int(row.split("\t")[0].strip())
     if userid not in text:
@@ -108,9 +105,6 @@ d = {}  # Finally it will store the min_review_date for each prodid(str)
 fake = set()  # it will store the userid(str) of fake reviwers
 filee = open(args.metadata, 'r')
 for f in filee:
-    # row is of form:
-    # userid prodid rating label date
-    # 0      0      5      1   2014-02-08
     fsplit = f.split("\t")
     userid = fsplit[0]
     prodid = fsplit[1]
@@ -122,10 +116,9 @@ for f in filee:
     """
     For each prodcut we keep track of current review date and min review date.
     """
-    # TODO: Redo without minn?
     date = fsplit[4].strip()
-    if prodid not in d:  # The prodif in d and minn is of type str.
-        minn[prodid] = 0  # QA: Is this line needed?
+    if prodid not in d:
+        minn[prodid] = 0
         d[prodid] = datetime.strptime(date, "%Y-%m-%d").date()
 
     minn[prodid] = datetime.strptime(date, "%Y-%m-%d").date()
@@ -151,8 +144,8 @@ for f in filee:
     label = fsplit[3]  # type str
     date = fsplit[4].strip()
     newdate = datetime.strptime(date, "%Y-%m-%d").date()
-    datetodays = (newdate - d[prodid]).days #type int
-    # #days between first review  ever review of this prodid and this review.
+    datetodays = (newdate - d[prodid]).days  #type int
+    # days between first ever review of this prodid and this review.
     review = Review(userid, '', prodid, '', rating, label, datetodays)
     # review is presented as
     if prodid + "_" + rating not in reviewsperproddata:
@@ -178,10 +171,6 @@ for f in filee:
     i.e for this prod-rating combo which userids reviewed it.
     """
 
-    # Since one user reviews the prod only once,
-    # in our case the 2 dicts should be of same length.
-    # Also set will be not be able to differentiate 2 reviews as obj ids will be different?
-    # print(len(prodlist)==len(reviewsperproddata))
 filee.close()
 edgedetails = {}
 cmnrevrsedges = {}
@@ -191,8 +180,8 @@ cmnrevrsedgeslen = {}
 countt = 0
 visited = {}
 mark = {}
-graphlist = list(G.nodes()) # [1,2,3...]
-cr = {} # list of reviews who gave p the rating r within time t.
+graphlist = list(G.nodes())  # [1,2,3...]
+cr = {}  # list of reviews who gave p the rating r within time t.
 for node1i in range(len(graphlist)):
     # 1st_loop = 0,1,2.... for each node in the graph.
     node1 = graphlist[node1i]
@@ -220,7 +209,8 @@ for node1i in range(len(graphlist)):
             # u2i = 1
             u2 = prodlist[dictprod[node1]][u2i]
             # u2 = (6)
-            if abs(u1.date - u2.date) < 10: # if the days diff is <10, co-reviwers.
+            if abs(u1.date -
+                   u2.date) < 10:  # if the days diff is <10, co-reviwers.
                 cr11.add(u2)
             # cr11 = {5,6,8,9,10}
         cr[node1].append(cr11)
@@ -228,7 +218,7 @@ for node1i in range(len(graphlist)):
         # in next iteration we review for 6,8,9,10 ; 8,9,10; 9,10
         # cr ={1: [{5,6,9,10},{6,9},{8},{9,10}], 2: [sets()] }
         # No reviewer reviewed around the same time as (8)
-    cr[node1].sort(key=len, reverse=True) # largest to smallest.
+    cr[node1].sort(key=len, reverse=True)  # largest to smallest.
 
 edgecount = {}
 for node1i in range(len(graphlist)):
@@ -242,49 +232,55 @@ for node1i in range(len(graphlist)):
         crlist = set()
         f = 0
         for cri1 in cr1:
-            if len(cri1) < 2: # Single nodes. Since cr1 is sorted we can safely exit.
-                break # Intersection of single node with any other set does not make sense.
+            if len(
+                    cri1
+            ) < 2:  # Single nodes. Since cr1 is sorted we can safely exit.
+                break  # Intersection of single node with any other set does not make sense.
                 # If that node had a common time, that would have been captured before.
             for cri2 in cr2:
-                if len(cri2) < 2: # Single nodes. Since cr2 is sorted we can safely exit.
+                if len(
+                        cri2
+                ) < 2:  # Single nodes. Since cr2 is sorted we can safely exit.
                     f = 1
                     break
                 crr = cri1.intersection(cri2)
-                crr = frozenset(crr) # By taking frozen sets, we reduce duplicacy in crlist.
+                crr = frozenset(
+                    crr
+                )  # By taking frozen sets, we reduce duplicacy in crlist.
                 if len(crr) > 1:
-                # For the case of p1r1 and p1r2, there will be no common nodes.
+                    # For the case of p1r1 and p1r2, there will be no common nodes.
                     crlist.add(crr)
 
-            if f == 1: # Single nodes. Since cr2 is sorted we can safely exit.
+            if f == 1:  # Single nodes. Since cr2 is sorted we can safely exit.
                 break
 
-        crlist = list(crlist) # List of frozensets
+        crlist = list(crlist)  # List of frozensets
         crlist.sort(key=len, reverse=True)
-        # print(node1)
-        # print(node2)
-        # print(cr1)
-        # print(cr2)
-        # print(crlist)
-        # sys.exit(1)
+        # crlist = [frozenset([(10), (96)])]
 
         for commonreviewers in crlist:
-            if len(commonreviewers) > 1: # redundant check, not needed.
-
+            if len(commonreviewers) > 1:  # redundant check, not needed.
                 if commonreviewers not in cmnrevrslistr:
+                    # if a new frozenset combination is found, irrespective of p_r
                     countt = countt + 1
                     cmnrevrslist[countt] = commonreviewers
                     cmnrevrslistr[commonreviewers] = countt
                     maincount = countt
                 else:
                     maincount = cmnrevrslistr[commonreviewers]
+                """
+                cmnrevrslist[1] = frozenset([(10), (96)])
+                cmnrevrslistr[frozenset([(10), (96)])] = 1
+                """
                 if node1 < node2:
                     n1 = node1
                     n2 = node2
-                else:
+                else:  # Because this is a undirected graph.
                     n1 = node2
                     n2 = node1
 
                 if maincount not in cmnrevrsedges:
+                    # unless it is the same set of common reviwers even for same n1,n2 maincount can fail.
                     cmnrevrsedges[maincount] = []
 
                 if (n1, n2) not in edgecount:
@@ -294,19 +290,38 @@ for node1i in range(len(graphlist)):
 
                 if (n1, n2) not in cmnrevrsedges[maincount]:
                     cmnrevrsedges[maincount].append((n1, n2))
+                    # {9: [(598, 613), (598, 1288), (613, 1288)]}
+                    # crlist [598_613] =  [frozenset([(920), (913)])]
+                    # crlist [598_1288] = [frozenset([(920), (913)])]
+                    # crlist [613_1288] =  [frozenset([(920), (913)])]
+                    # i.e these 3 edges share the common property
+                    # i.e these set of reviews gave these products the same rating in time interval t.
                     edgecount[(n1, n2)] = edgecount[(n1, n2)] + 1
+                """
+                cmnrevrsedges = {1:(n1,n2)}
+                edgecount = {(n1,n2): n}
+                edgecount = {(356,2297): 3}
+                edgedetails = { (356,2297): [set1, set2, set3]}
+                """
 
 for node in G.nodes():
-    if G.degree[node] == 0:
-        k = frozenset(reviewsperproddata[dictprod[node]])
+    if G.degree[node] == 0:  # i.e products that were not co-reviewed.
+        k = frozenset(reviewsperproddata[
+            dictprod[node]])  # set of reviewers who reviewed p with rating r.
         if k not in CC_mapper:
             CC_mapper[k] = str(dictprod[node])
         else:
             CC_mapper[k] = CC_mapper[k] + ':' + str(dictprod[node])
+            # CC_mapper= {frozenset([(1063)]): '191_3:622_4'}
+
+# Basically CC_mapper stores the set of reviewers who reviewed the same set of product with same rating.
+# And in the time interval delta_t, did not review other products, since g.degree[node]==0
 
 poppinglist = []
 for item in cmnrevrsedges:
     if len(cmnrevrsedges[item]) == 1:
+        # If only a single set fo reviewers have reviewd the 2 products simultaneously then remove them.
+        # That could be coincidental as well.
         poppinglist.append(item)
 
 for p in poppinglist:
@@ -320,14 +335,25 @@ for c in cmnrevrsedges:
 sorted_cmnrevrsedgeslen = sorted(cmnrevrsedgeslen.items(),
                                  key=operator.itemgetter(1))
 cmnrevrsedgeslen = sorted_cmnrevrsedgeslen
+"""
+cmnrevrsedges = {
+                    9: [(598, 613), (598, 1288), (613, 1288)],
+                    20: [(2135, 2297), (2135, 2438), (2297, 2438)],
+                    30: [(2297, 2435), (2297, 2438), (2435, 2438)]
+                }
+mark = {9: 0, 20: 0, 30: 0}
+cmnrevrsedgeslen = [(9, 3), (20, 3), (30, 3)]
+"""
 
 for ci in range(len(cmnrevrsedgeslen)):
     userset = set()
     prodset = set()
     f = 0
     i = set(cmnrevrslist[cmnrevrsedgeslen[ci][0]])
+    # i = set([(920), (913)])
     for cj in range(ci + 1, len(cmnrevrsedgeslen)):
         j = set(cmnrevrslist[cmnrevrsedgeslen[cj][0]])
+        # j = set([(8), (56)])
         if i.difference(j) == 0:
             if canbeincluded(j):
                 mark[cmnrevrsedgeslen[ci][0]] = 1
@@ -397,7 +423,7 @@ for ci in range(len(cmnrevrsedgeslen)):
             CC_mapper[k] = CC_mapper[k] + ':' + ss
 
 GG = nx.Graph()
-for cmnrvr in cmnrevrsedges:
+for cmnrvr in cmnrevrsedges:  # Did not understand why we need this loop?
     nodes = []
     ss = ''
     for edge in cmnrevrsedges[cmnrvr]:
@@ -421,9 +447,8 @@ for cmnrvr in cmnrevrsedges:
 
 co = 0
 while len(G.edges()) > 0:
-
     co = co + 1
-    print str(co) + "\t" + str(len(G.edges()))
+    print(str(co) + "\t" + str(len(G.edges())))
 
     cmnrevrsedges2 = {}
     cmnrevrslist2 = {}
@@ -435,7 +460,7 @@ while len(G.edges()) > 0:
     edgelist = list(G.edges())
     for edge1i in range(len(edgelist)):
         edge1 = edgelist[edge1i]
-
+        # edge1 = (23,1161)
         if edge1[0] < edge1[1]:
             e10 = edge1[0]
             e11 = edge1[1]
@@ -444,8 +469,9 @@ while len(G.edges()) > 0:
             e11 = edge1[0]
 
         s1 = str(dictprod[e10]) + ":" + str(dictprod[e11])
-
+        # s1 = 8_5:424_5
         if edge1i == 0:
+            # count = 2240
             count = count + 1
             node1 = count
             dictprod[count] = s1
@@ -457,7 +483,7 @@ while len(G.edges()) > 0:
 
         for edge2i in range(edge1i + 1, len(edgelist)):
             edge2 = edgelist[edge2i]
-
+            # edge2 = (1115, 106)
             if edge2[0] < edge2[1]:
                 e20 = edge2[0]
                 e21 = edge2[1]
@@ -466,7 +492,7 @@ while len(G.edges()) > 0:
                 e21 = edge2[0]
 
             s2 = str(dictprod[e20]) + ":" + str(dictprod[e21])
-
+            # s2 = 44_5:74_5
             if edge1i == 0:
                 count = count + 1
                 node2 = count
@@ -480,7 +506,6 @@ while len(G.edges()) > 0:
             if isAdjacent(edge1, edge2):
                 cr1 = set(reviewsperproddata[dictprod[node1]])
                 cr2 = set(reviewsperproddata[dictprod[node2]])
-
                 crlist = set()
                 f = 0
                 for cri1 in cr1:
