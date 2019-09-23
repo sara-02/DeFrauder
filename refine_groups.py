@@ -303,6 +303,7 @@ def cosine(content_a, content_b):
 def GCS(group):
 
     maxx = 0
+    cc=0
     for prod in group.prods:
         avg = 0
         c = 0
@@ -318,10 +319,12 @@ def GCS(group):
                         c = c + 1
         if c != 0:
             avg = avg / (c * 1.0)
-        if avg > maxx:
-            maxx = avg
+        cc+=1
+        maxx += avg
+ #       if avg > maxx:
+ #           maxx = avg
 
-    return maxx
+    return maxx/cc
 
 
 def GMCS(group):
