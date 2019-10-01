@@ -303,7 +303,6 @@ def cosine(content_a, content_b):
 def GCS(group):
 
     maxx = 0
-    cc=0
     for prod in group.prods:
         avg = 0
         c = 0
@@ -319,12 +318,9 @@ def GCS(group):
                         c = c + 1
         if c != 0:
             avg = avg / (c * 1.0)
-        cc+=1
-        maxx += avg
- #       if avg > maxx:
- #           maxx = avg
-
-    return maxx/cc
+        if avg > maxx:
+            maxx = avg
+    return maxx
 
 
 def GMCS(group):
@@ -449,19 +445,4 @@ grps = {}
 grps2 = {}
 create_groups()
 with open(args.outputgroups, 'w') as fp:
-    json.dump(grps2, fp)
-
-count = 0.0
-GS_ = 0.0
-RCS_ = 0.0
-for index in grps2:
-    if len(grps2[index]['users']) < 2:
-        continue
-    GS_ += grps2[index]['gs']
-    RCS_ += grps2[index]['rcs']
-    count += 1
-
-print(count)
-print("gcs", GS_ / count)
-print("rcs", RCS_ / count)
-print('end')
+    json.dump(grps2, fp, indent=True)
